@@ -48,9 +48,9 @@ const form = $('form-quero');
 if (form) {
   form.addEventListener('submit', () => {
     const nome = $('q-nome').value.trim(), salao = $('q-salao').value.trim();
-    let msg = 'Quero a MISH Precificação.';
-    if (nome) msg = `Olá! Meu nome é ${nome}${salao ? ', do ' + salao : ''}. Quero a MISH Precificação.`;
-    else if (salao) msg = `Olá! Sou do ${salao}. Quero a MISH Precificação.`;
+    let msg = 'Quero meu acesso à MISH Precificação.';
+    if (nome) msg = `Olá! Meu nome é ${nome}${salao ? ', do ' + salao : ''}. Quero meu acesso à MISH Precificação.`;
+    else if (salao) msg = `Olá! Sou do ${salao}. Quero meu acesso à MISH Precificação.`;
     form.elements.text.value = msg;   /* o envio normal do formulário abre wa.me com ?text=... */
   });
   /* Enter no primeiro campo vai para o segundo em vez de enviar */

@@ -9,7 +9,7 @@ const body=document.body;
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LOGO='<span class="mish" style="--h:30px" role="img" aria-label="MISH"></span>';
 /* link do WhatsApp do Israel (js/config.js). Sem número configurado, os botões de compra não aparecem. */
-const zap=(()=>{const n=String(cfg.whatsapp||'').replace(/\D/g,''); if(n.length<10)return ''; return 'https://wa.me/'+(n.length<=11?'55'+n:n)+'?text='+encodeURIComponent(cfg.whatsappMensagem||'Quero a MISH Precificação.');})();
+const zap=(()=>{const n=String(cfg.whatsapp||'').replace(/\D/g,''); if(n.length<10)return ''; return 'https://wa.me/'+(n.length<=11?'55'+n:n)+'?text='+encodeURIComponent(cfg.whatsappMensagem||'Quero meu acesso à MISH Precificação.');})();
 const comprar=t=>zap?'<a class="auth-link" href="'+zap+'" target="_blank" rel="noopener">'+t+'</a>':'';
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
 

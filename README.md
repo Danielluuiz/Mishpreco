@@ -52,7 +52,7 @@ e abra http://localhost:8080. (Não abra o `index.html` com dois cliques: o logi
 3. **O cliente** abre o app, toca em **Tenho um código de acesso**, digita o código, e-mail e senha. Cada código cria uma única conta; depois de usado não vale de novo.
 4. **Controle**: códigos livres e quem usou cada um estão nas consultas no fim do `schema.sql` (ou em Table Editor > `codigos_acesso`).
 
-QR code: aponte para `https://wa.me/5521967398334?text=Quero%20a%20MISH%20Precifica%C3%A7%C3%A3o`.
+QR code: aponte para `https://wa.me/5521967398334?text=Quero%20meu%20acesso%20%C3%A0%20MISH%20Precifica%C3%A7%C3%A3o`.
 
 Quem já tinha conta antes da mudança continua entrando normalmente.
 

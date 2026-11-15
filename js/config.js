@@ -8,5 +8,5 @@ window.MISH_CONFIG = {
   /* WhatsApp do Israel para vender o acesso (com DDD, ex.: "11 99999-9999").
      Enquanto estiver vazio, os botões "Compre pelo WhatsApp" não aparecem na tela de login. */
   whatsapp: "21 96739-8334",
-  whatsappMensagem: "Quero a MISH Precificação."
+  whatsappMensagem: "Quero meu acesso à MISH Precificação."
 };
