@@ -17,8 +17,16 @@ function card(inner){
   body.classList.add('authing');
   box.hidden=false;
   box.innerHTML='<div class="auth-card"><div class="auth-logo">'+LOGO+'</div><p class="auth-tag">Planilha de Precificação</p>'+inner+'</div>';
+  /* botão de olho em cada campo de senha */
+  box.querySelectorAll('input[type=password]').forEach(inp=>{
+    const w=document.createElement('span'); w.className='pw';
+    inp.parentNode.insertBefore(w,inp); w.appendChild(inp);
+    w.insertAdjacentHTML('beforeend','<button type="button" class="pw-eye" aria-label="Mostrar senha" aria-pressed="false">'+OLHO+'</button>');
+  });
   const f=box.querySelector('input'); if(f)setTimeout(()=>{try{f.focus()}catch(_){}},30);
 }
+const OLHO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+const OLHO_X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a10.6 10.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18"/></svg>';
 function setMsg(t,ok){const m=box.querySelector('.auth-msg'); if(m){m.textContent=t||''; m.classList.toggle('ok',!!ok)}}
 function busy(on){box.querySelectorAll('button,input').forEach(el=>el.disabled=on)}
 
@@ -98,6 +106,12 @@ function telaNovaSenha(){
 function telaCarregando(t){ card('<div class="auth-loading"><span class="auth-spin"></span>'+esc(t||'Carregando seus dados...')+'</div>'); }
 
 box.addEventListener('click',e=>{
+  const eye=e.target.closest('.pw-eye');
+  if(eye){ e.preventDefault(); const inp=eye.parentNode.querySelector('input'); const ver=inp.type==='password';
+    inp.type=ver?'text':'password'; eye.innerHTML=ver?OLHO_X:OLHO;
+    eye.setAttribute('aria-label',ver?'Esconder senha':'Mostrar senha'); eye.setAttribute('aria-pressed',String(ver));
+    try{ inp.focus({preventScroll:true}); const n=inp.value.length; inp.setSelectionRange(n,n); }catch(_){}
+    return; }
   const b=e.target.closest('[data-t]'); if(!b)return; e.preventDefault();
   const em=(box.querySelector('input[name=email]')||{}).value||'';
   ({entrar:telaEntrar,criar:telaCriar,esqueci:telaEsqueci})[b.dataset.t](em);

@@ -9,6 +9,12 @@ body.authing .shell, body.authing .nav{display:none!important}
 .auth-sub{color:var(--sub);font-size:.88rem;margin:-6px 0 14px}
 .auth-form{display:grid;gap:12px}
 .auth .inp{color:var(--ink);font-family:inherit}
+.pw{position:relative;display:block}
+.pw .inp{width:100%;padding-right:48px}
+.pw .inp::-ms-reveal{display:none}
+.pw-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:0;border-radius:10px;background:none;color:var(--sub);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.pw-eye:hover{color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.pw-eye svg{width:20px;height:20px}
 .auth-full{width:100%;margin-top:4px;cursor:pointer;font-family:inherit}
 .auth-full:disabled{opacity:.6;cursor:default}
 .auth-msg{font-size:.84rem;font-weight:600;color:var(--bad);min-height:1px;line-height:1.4}
