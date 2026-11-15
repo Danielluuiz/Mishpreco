@@ -8,12 +8,15 @@ const box=document.getElementById('auth');
 const body=document.body;
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LOGO='<span class="mish" style="--h:30px" role="img" aria-label="MISH"></span>';
+/* link do WhatsApp do Israel (js/config.js). Sem número configurado, os botões de compra não aparecem. */
+const zap=(()=>{const n=String(cfg.whatsapp||'').replace(/\D/g,''); if(n.length<10)return ''; return 'https://wa.me/'+(n.length<=11?'55'+n:n)+'?text='+encodeURIComponent(cfg.whatsappMensagem||'Olá! Quero comprar o acesso à Planilha de Precificação MISH.');})();
+const comprar=t=>zap?'<a class="auth-link" href="'+zap+'" target="_blank" rel="noopener">'+t+'</a>':'';
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
 
 function card(inner){
   body.classList.add('authing');
   box.hidden=false;
-  box.innerHTML='<div class="auth-card"><div class="auth-logo">'+LOGO+'</div><p class="auth-tag">Planilha de Precificação gratuita</p>'+inner+'</div>';
+  box.innerHTML='<div class="auth-card"><div class="auth-logo">'+LOGO+'</div><p class="auth-tag">Planilha de Precificação</p>'+inner+'</div>';
   const f=box.querySelector('input'); if(f)setTimeout(()=>{try{f.focus()}catch(_){}},30);
 }
 function setMsg(t,ok){const m=box.querySelector('.auth-msg'); if(m){m.textContent=t||''; m.classList.toggle('ok',!!ok)}}
@@ -39,7 +42,7 @@ function traduz(err){
   if(/Invalid login credentials/i.test(m))return 'E-mail ou senha incorretos.';
   if(/Email not confirmed/i.test(m))return 'Confirme seu e-mail pelo link que enviamos antes de entrar.';
   if(/already registered|already been registered/i.test(m))return 'Já existe uma conta com esse e-mail. Use "Entrar" ou "Esqueci minha senha".';
-  if(/Database error saving new user|MISH_LIMITE/i.test(m))return 'As vagas desta primeira turma já foram preenchidas. Fale com a MISH para entrar na lista.';
+  if(/Database error saving new user|MISH_CODIGO/i.test(m))return 'Código de acesso inválido ou já usado. Confira o código que a MISH enviou pelo WhatsApp.';
   if(/Signups not allowed/i.test(m))return 'Novos cadastros estão fechados no momento.';
   if(/rate limit|too many|after \d+ seconds/i.test(m))return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.';
   if(/Password should be at least/i.test(m))return 'A senha precisa ter pelo menos 6 caracteres.';
@@ -59,18 +62,20 @@ function telaEntrar(email,aviso){
       '<div class="auth-msg'+(aviso?' ok':'')+'">'+esc(aviso||'')+'</div>'+
       '<button class="btn pri auth-full" type="submit">Entrar</button>'+
     '</form>'+
-    '<div class="auth-links"><button class="auth-link" data-t="criar">Criar conta grátis</button><button class="auth-link" data-t="esqueci">Esqueci minha senha</button></div>');
+    '<div class="auth-links"><button class="auth-link" data-t="criar">Tenho um código de acesso</button><button class="auth-link" data-t="esqueci">Esqueci minha senha</button></div>'+
+    (zap?'<div class="auth-links">'+comprar('Ainda não tem acesso? Compre pelo WhatsApp')+'</div>':''));
 }
 function telaCriar(email){
-  card('<h1>Criar conta</h1>'+
+  card('<h1>Criar conta</h1><p class="auth-sub">Use o código de acesso que você recebeu da MISH pelo WhatsApp.</p>'+
     '<form class="auth-form" data-f="criar">'+
+      '<label class="field"><span>Código de acesso</span><input class="inp" type="text" name="codigo" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="MISH-XXXX-XXXX" required></label>'+
       '<label class="field"><span>E-mail</span><input class="inp" type="email" name="email" autocomplete="email" required value="'+esc(email)+'"></label>'+
       '<label class="field"><span>Senha (mínimo 6 caracteres)</span><input class="inp" type="password" name="senha" autocomplete="new-password" minlength="6" required></label>'+
       '<label class="field"><span>Repita a senha</span><input class="inp" type="password" name="senha2" autocomplete="new-password" minlength="6" required></label>'+
       '<div class="auth-msg"></div>'+
       '<button class="btn pri auth-full" type="submit">Criar conta</button>'+
     '</form>'+
-    '<div class="auth-links"><button class="auth-link" data-t="entrar">Já tenho conta</button></div>');
+    '<div class="auth-links"><button class="auth-link" data-t="entrar">Já tenho conta</button>'+comprar('Não tenho código')+'</div>');
 }
 function telaEsqueci(email){
   card('<h1>Recuperar senha</h1><p class="auth-sub">Enviamos um link para você criar uma senha nova.</p>'+
@@ -102,13 +107,15 @@ box.addEventListener('submit',async e=>{
   const f=e.target, d=Object.fromEntries(new FormData(f)), tipo=f.dataset.f;
   const email=(d.email||'').trim().toLowerCase();
   if((tipo==='criar'||tipo==='nova')&&d.senha!==d.senha2){setMsg('As duas senhas não são iguais.');return}
+  const codigo=String(d.codigo||'').toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^MISH/,'').replace(/^(.{4})(.{4})$/,'MISH-$1-$2');
+  if(tipo==='criar'&&!/^MISH-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(codigo)){setMsg('Digite o código de acesso no formato MISH-XXXX-XXXX.');return}
   busy(true); setMsg('');
   try{
     if(tipo==='entrar'){
       const {data,error}=await sb.auth.signInWithPassword({email,password:d.senha}); if(error)throw error;
       await iniciar(data.session);
     }else if(tipo==='criar'){
-      const {data,error}=await sb.auth.signUp({email,password:d.senha,options:{emailRedirectTo:redirect()}}); if(error)throw error;
+      const {data,error}=await sb.auth.signUp({email,password:d.senha,options:{emailRedirectTo:redirect(),data:{codigo}}}); if(error)throw error;
       if(data.session){ await iniciar(data.session); }
       else if(data.user&&data.user.identities&&data.user.identities.length===0){ busy(false); setMsg(traduz({message:'already registered'})); }
       else { telaEntrar(email,'Conta criada! Enviamos um link de confirmação para '+email+'. Abra o e-mail, confirme e depois entre aqui.'); }
