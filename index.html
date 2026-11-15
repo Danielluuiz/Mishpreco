@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MISH Precificação</title>
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem("mish-precifica-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="authing">
+<div class="shell">
+  <header class="top"><div class="top-in" id="topbar"></div></header>
+  <main class="page" id="view"></main>
+  <div class="foot"><span>Planilha de Precificação gratuita</span><span>·</span><span class="mish" role="img" aria-label="MISH"></span></div>
+</div>
+<nav class="nav" id="nav" aria-label="Menu"></nav>
+<div class="ov" id="ov" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="saved" id="toast">Salvo na sua conta</div>
+<div class="auth" id="auth" hidden></div>
+<input type="file" id="f-logo" accept="image/*" hidden>
+<input type="file" id="f-photo" accept="image/*" hidden>
+<input type="file" id="f-import" accept=".xlsx,.xls,.csv,.txt" hidden>
+<input type="file" id="f-backup" accept=".json" hidden>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<!-- js/app.js é carregado pelo auth.js depois do login -->
+</body>
+</html>

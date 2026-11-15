@@ -1,0 +1,26 @@
+/* Tela de entrada (login / criar conta). Usa as mesmas cores e componentes do app (styles.css). */
+body.authing .shell, body.authing .nav{display:none!important}
+.auth{--sc:var(--accent);position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--bg);overflow-y:auto;font-family:var(--f-ui);color:var(--ink)}
+.auth[hidden]{display:none!important}
+.auth-card{width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:28px 22px;margin:auto}
+.auth-logo{display:flex;justify-content:center}
+.auth-tag{text-align:center;color:var(--sub);font-size:.8rem;font-weight:600;margin:8px 0 20px}
+.auth h1{font-size:1.35rem;font-weight:800;margin:0 0 14px}
+.auth-sub{color:var(--sub);font-size:.88rem;margin:-6px 0 14px}
+.auth-form{display:grid;gap:12px}
+.auth .inp{color:var(--ink);font-family:inherit}
+.auth-full{width:100%;margin-top:4px;cursor:pointer;font-family:inherit}
+.auth-full:disabled{opacity:.6;cursor:default}
+.auth-msg{font-size:.84rem;font-weight:600;color:var(--bad);min-height:1px;line-height:1.4}
+.auth-msg:empty{display:none}
+.auth-msg.ok{color:var(--ok)}
+.auth-links{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px}
+.auth-link{background:none;border:0;padding:6px 0;color:var(--accent);font:700 .84rem var(--f-ui);cursor:pointer}
+.auth-link:hover{text-decoration:underline}
+.auth-loading{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--sub);font-weight:600;padding:18px 0}
+.auth-spin{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--accent);animation:auth-spin .8s linear infinite}
+@keyframes auth-spin{to{transform:rotate(360deg)}}
+.foot{flex-wrap:wrap}
+.foot-user{overflow:hidden;text-overflow:ellipsis;max-width:220px;white-space:nowrap}
+.foot-out{background:none;border:0;padding:4px 2px;color:var(--accent);font:700 .78rem var(--f-ui);cursor:pointer}
+.foot-out:hover{text-decoration:underline}
