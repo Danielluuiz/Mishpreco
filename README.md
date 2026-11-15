@@ -48,11 +48,11 @@ e abra http://localhost:8080. (Não abra o `index.html` com dois cliques: o logi
 ## Vender o acesso (código de acesso)
 
 1. **Gerar códigos** (Supabase > SQL Editor): `select * from gerar_codigos(50, 'feira');` gera 50 códigos no formato `MISH-XXXX-XXXX`. Copie a lista e passe para o Israel.
-2. **Na feira**: o cliente lê o QR code, cai no WhatsApp do Israel, paga, e o Israel responde com **um** código da lista e o link do app.
+2. **Na feira**: o cliente lê o QR code, cai no WhatsApp da MISH, paga e **envia o comprovante na conversa**. Só depois de conferir o comprovante, responda com **um** código da lista e o link do app.
 3. **O cliente** abre o app, toca em **Tenho um código de acesso**, digita o código, e-mail e senha. Cada código cria uma única conta; depois de usado não vale de novo.
 4. **Controle**: códigos livres e quem usou cada um estão nas consultas no fim do `schema.sql` (ou em Table Editor > `codigos_acesso`).
 
-QR code: aponte para `https://wa.me/55DDDNUMERO?text=Quero%20comprar%20a%20Planilha%20de%20Precifica%C3%A7%C3%A3o%20MISH` (troque pelo número do Israel).
+QR code: aponte para `https://wa.me/5521967398334?text=Quero%20a%20MISH%20Precifica%C3%A7%C3%A3o`.
 
 Quem já tinha conta antes da mudança continua entrando normalmente.
 
