@@ -8,7 +8,10 @@ Layout, telas, cálculos e textos são os do artefato original. O que foi acresc
 
 ```
 mish-precificacao/
-├── index.html            Página única
+├── index.html            Landing page (página inicial do site)
+├── app.html              App: login e planilha
+├── css/landing.css       Visual da landing
+├── js/landing.js         Calculadora e botão do WhatsApp da landing
 ├── css/styles.css        Visual original (sem alteração)
 ├── css/auth.css          Visual da tela de entrar / criar conta
 ├── js/config.js          ← COLE AQUI a URL e a chave do Supabase
@@ -36,7 +39,7 @@ Dentro da pasta:
 python -m http.server 8080
 ```
 
-e abra http://localhost:8080. (Não abra o `index.html` com dois cliques: o login precisa de um endereço http.)
+e abra http://localhost:8080 (landing) ou http://localhost:8080/app.html (app). Não abra os arquivos com dois cliques: o login precisa de um endereço http.
 
 ## Como os dados funcionam
 

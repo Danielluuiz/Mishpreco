@@ -139,11 +139,25 @@ sb.auth.onAuthStateChange((ev)=>{
 
 function toast(t){const el=document.getElementById('toast'); if(!el)return; el.textContent=t; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),2600);}
 
+/* renova o acesso; se não for possível, encerra a sessão para a pessoa entrar de novo */
+async function renovar(){
+  try{ const {data,error}=await sb.auth.refreshSession(); if(!error&&data&&data.session)return data.session; }catch(_){}
+  try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
+  return null;
+}
+const sessaoVencida=e=>/JWT expired|invalid JWT|jwt/i.test((e&&(e.message||e.code))||'')||(e&&(e.code==='PGRST301'||e.code==='PGRST303'));
+
 async function iniciar(session){
   if(iniciado||!session)return;
   const uid=session.user.id, KEY='mish-precifica-v1:'+uid, PEND='mish-precifica-pendente:'+uid;
   telaCarregando();
-  const {data:row,error}=await sb.from('app_state').select('data,updated_at').eq('user_id',uid).maybeSingle();
+  const buscar=()=>sb.from('app_state').select('data,updated_at').eq('user_id',uid).maybeSingle();
+  let {data:row,error}=await buscar();
+  if(error&&sessaoVencida(error)){
+    const nova=await renovar();
+    if(!nova){ telaEntrar(session.user.email||'','Sua sessão expirou. Entre de novo para continuar.'); return; }
+    ({data:row,error}=await buscar());
+  }
   const local=ls.get(KEY), pendente=!!ls.get(PEND);
   let inicial=null, enviarJa=false;
   if(error){
@@ -194,8 +208,10 @@ async function iniciar(session){
 
 (async()=>{
   telaCarregando('Carregando...');
-  const {data:{session}}=await sb.auth.getSession();
+  let {data:{session}}=await sb.auth.getSession();
   if(recuperando){ telaNovaSenha(); return; }
+  /* sessão guardada no navegador já vencida (ex.: aba aberta há dias): renova antes de usar */
+  if(session&&session.expires_at&&session.expires_at*1000<Date.now()+60000){ session=await renovar(); }
   if(session) iniciar(session); else telaEntrar('');
 })();
 })();
