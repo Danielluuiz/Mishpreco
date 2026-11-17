@@ -129,7 +129,7 @@ function save(msg){
   }
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
   if(window.MISH_CLOUD)window.MISH_CLOUD.push(S); /* grava na conta (auth.js) */
-  const t=document.getElementById('toast'); t.textContent=msg||'Salvo na sua conta'; t.classList.add('show');
+  const t=document.getElementById('toast'); t.textContent=msg||window.MISH_SAVE_MSG||'Salvo na sua conta'; t.classList.add('show');
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800);
 }
 const M=()=>{if(!S.months[S.cur]){S.cur=Object.keys(S.months).sort().pop()}return S.months[S.cur]};

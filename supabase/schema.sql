@@ -127,12 +127,45 @@ language sql stable security definer set search_path = public as $$
    where c.obs = public.boss_carteira() or c.obs like public.boss_carteira() || ' - %'
    order by coalesce(s.updated_at, u.created_at) desc
 $$;
+-- Gestor editor: pode alterar as planilhas dos clientes da carteira (ex.: o contador).
+alter table public.boss add column if not exists pode_editar boolean not null default false;
+update public.boss set pode_editar = true where email = 'amaury.adm@mish.com';
+
+create or replace function public.boss_editor()
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce((select b.pode_editar from public.boss b
+    join auth.users u on lower(u.email) = lower(b.email)
+   where u.id = auth.uid() and u.email_confirmed_at is not null limit 1), false)
+$$;
+
+-- Grava a planilha de um cliente. Só funciona se o cliente for da carteira de quem chama e se ele for editor.
+create or replace function public.boss_salvar(cliente uuid, dados jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.boss_editor() then raise exception 'MISH_BOSS: sem permissao para editar'; end if;
+  if not exists (select 1 from public.codigos_acesso c
+                  where c.usado_por = cliente
+                    and (c.obs = public.boss_carteira() or c.obs like public.boss_carteira() || ' - %')) then
+    raise exception 'MISH_BOSS: cliente fora da sua carteira';
+  end if;
+  insert into public.app_state(user_id, data, updated_at) values (cliente, dados, now())
+    on conflict (user_id) do update set data = excluded.data, updated_at = now();
+end $$;
+
+revoke all on function public.boss_editor() from public, anon;
+revoke all on function public.boss_salvar(uuid, jsonb) from public, anon;
+grant execute on function public.boss_editor() to authenticated;
+grant execute on function public.boss_salvar(uuid, jsonb) to authenticated;
+
 revoke all on function public.boss_carteira() from public, anon;
 revoke all on function public.boss_clientes() from public, anon;
 grant execute on function public.boss_carteira() to authenticated;
 grant execute on function public.boss_clientes() to authenticated;
 
 -- COMO USAR:
---   Novo gestor:            insert into boss values ('email@dominio.com', 'NOME DA CARTEIRA');
+--   Novo gestor (só consulta): insert into boss(email, carteira) values ('email@dominio.com', 'NOME DA CARTEIRA');
+--   Deixar o gestor editar:     update boss set pode_editar = true where email = 'email@dominio.com';
 --   Códigos para a carteira: select * from gerar_codigos(2, 'ADM BOSS');
 --   Código para o gestor criar a conta dele (fora da carteira): select * from gerar_codigos(1, 'BOSS');
+
+notify pgrst, 'reload schema';

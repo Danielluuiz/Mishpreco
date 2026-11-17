@@ -181,6 +181,7 @@ async function painelBoss(session,carteira){
   if(error&&sessaoVencida(error)&&await renovar()) ({data:lista,error}=await sb.rpc('boss_clientes'));
   if(error){ card('<div class="auth-msg">Não conseguimos carregar a carteira ('+esc(traduz(error))+').</div><button class="btn pri auth-full" onclick="location.reload()">Tentar de novo</button>'); return; }
   lista=lista||[];
+  let editor=false; try{ const {data:ed}=await sb.rpc('boss_editor'); editor=ed===true; }catch(_){}
   const rs=lista.map(c=>resumo(c.data)), ok=rs.filter(r=>r&&r.F>0);
   const tF=ok.reduce((s,r)=>s+r.F,0), tR=ok.reduce((s,r)=>s+r.R,0);
   const kpi=(l,v)=>'<div class="boss-kpi"><span>'+l+'</span><b>'+v+'</b></div>';
@@ -193,7 +194,8 @@ async function painelBoss(session,carteira){
       '<div>Serviços / produtos<b>'+r.svc+' / '+r.prod+'</b></div></div>'
       :'<small>Ainda não preencheu a planilha.</small>';
     return '<div class="boss-cli"><div class="boss-cli-top"><div><h2>'+esc(nome)+'</h2><small>'+esc(c.email)+' · atualizado em '+dataBR(c.atualizado_em)+'</small></div>'+
-      (c.data?'<div class="boss-acts"><button class="btn sec sm boss-open boss-apres" data-i="'+i+'">Apresentação</button><button class="btn pri sm boss-open" data-i="'+i+'">Abrir planilha</button></div>':'')+'</div>'+nums+'</div>';};
+      '<div class="boss-acts">'+(c.data?'<button class="btn sec sm boss-open boss-apres" data-i="'+i+'">Apresentação</button>':'')+
+      (c.data||editor?'<button class="btn pri sm boss-open" data-i="'+i+'">'+(editor?(c.data?'Abrir e editar':'Preencher planilha'):'Abrir planilha')+'</button>':'')+'</div></div>'+nums+'</div>';};
   body.classList.add('authing'); box.hidden=false;
   box.innerHTML='<div class="auth-card boss"><div class="auth-logo">'+LOGO+'</div><p class="auth-tag">Visão Boss · '+esc(carteira)+'</p>'+
     '<div class="boss-head"><h1>Clientes</h1><button class="auth-link" data-boss="sair">Sair ('+esc(session.user.email)+')</button></div>'+
@@ -208,17 +210,30 @@ async function painelBoss(session,carteira){
       else alert('Não foi possível carregar a apresentação. Recarregue a página e tente de novo.');
       return;
     }
-    abrirCliente(session,c);
+    abrirCliente(session,c,editor);
   };
 }
-function abrirCliente(session,c){
-  const nome=(c.data.company&&c.data.company.name)||c.email;
-  window.MISH_READONLY=true;
-  window.MISH_KEY='mish-boss-consulta';
-  window.MISH_INITIAL=JSON.parse(JSON.stringify(c.data));
-  window.MISH_CLOUD={push(){},flush(){return Promise.resolve()}};
-  window.MISH_ACCOUNT={email:session.user.email,sair:async()=>{await sb.auth.signOut(); location.replace(redirect());}};
-  document.body.insertAdjacentHTML('afterbegin','<div class="boss-bar"><span>Consultando <b>'+esc(nome)+'</b> · somente leitura</span><button type="button" onclick="location.reload()">← Voltar aos clientes</button></div>');
+function abrirCliente(session,c,editor){
+  const nome=(c.data&&c.data.company&&c.data.company.name)||c.email;
+  window.MISH_KEY='mish-boss:'+c.user_id;
+  window.MISH_INITIAL=c.data?JSON.parse(JSON.stringify(c.data)):null;
+  if(editor){
+    /* gestor editor: grava na conta do cliente (junta alterações seguidas em um envio de 1 s) */
+    window.MISH_SAVE_MSG='Salvo na conta de '+nome;
+    let timer=null, ultimo=null, enviando=null;
+    const enviar=async()=>{ timer=null; if(!ultimo)return; const dados=ultimo; ultimo=null;
+      enviando=sb.rpc('boss_salvar',{cliente:c.user_id,dados}).then(({error})=>{ if(error){ ultimo=ultimo||dados; toast('Não foi possível salvar na conta do cliente. Confira a internet e tente de novo.'); } });
+      await enviando; enviando=null; };
+    window.MISH_CLOUD={push(S){ ultimo=JSON.parse(JSON.stringify(S)); clearTimeout(timer); timer=setTimeout(enviar,1000); },
+      async flush(){ if(enviando)await enviando; if(timer){clearTimeout(timer);} return enviar(); }};
+    addEventListener('pagehide',()=>window.MISH_CLOUD.flush());
+  }else{
+    window.MISH_READONLY=true;
+    window.MISH_CLOUD={push(){},flush(){return Promise.resolve()}};
+  }
+  window.MISH_ACCOUNT={email:session.user.email,sair:async()=>{await window.MISH_CLOUD.flush(); await sb.auth.signOut(); location.replace(redirect());}};
+  document.body.insertAdjacentHTML('afterbegin','<div class="boss-bar"><span>'+(editor?'Editando':'Consultando')+' <b>'+esc(nome)+'</b> · '+(editor?'as alterações vão para a conta do cliente':'somente leitura')+'</span><button type="button" id="boss-voltar">← Voltar aos clientes</button></div>');
+  document.getElementById('boss-voltar').onclick=async()=>{ await window.MISH_CLOUD.flush(); location.reload(); };
   const s=document.createElement('script'); s.src='js/app.js';
   s.onload=()=>{ box.hidden=true; box.innerHTML=''; box.onclick=null; body.classList.remove('authing'); };
   document.body.appendChild(s);
