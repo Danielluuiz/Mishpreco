@@ -123,6 +123,10 @@ try{ if(window.MISH_INITIAL)S=window.MISH_INITIAL; else{const raw=localStorage.g
 if(!S||!S.months)S=sample();
 let toastT;
 function save(msg){
+  if(window.MISH_READONLY){ /* visão Boss: só consulta, nada é gravado */
+    const t=document.getElementById('toast'); t.textContent='Modo consulta: alterações não são salvas'; t.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800); return;
+  }
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
   if(window.MISH_CLOUD)window.MISH_CLOUD.push(S); /* grava na conta (auth.js) */
   const t=document.getElementById('toast'); t.textContent=msg||'Salvo na sua conta'; t.classList.add('show');

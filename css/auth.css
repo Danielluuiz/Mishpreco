@@ -30,3 +30,24 @@ body.authing .shell, body.authing .nav{display:none!important}
 .foot-user{overflow:hidden;text-overflow:ellipsis;max-width:220px;white-space:nowrap}
 .foot-out{background:none;border:0;padding:4px 2px;color:var(--accent);font:700 .78rem var(--f-ui);cursor:pointer}
 .foot-out:hover{text-decoration:underline}
+
+/* Visão Boss */
+.auth-card.boss{max-width:860px}
+.boss-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.boss-head h1{margin:0}
+.boss-tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 18px}
+.boss-kpi{border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.boss-kpi span{display:block;color:var(--sub);font-size:.75rem;font-weight:700}
+.boss-kpi b{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.boss-list{display:grid;gap:10px}
+.boss-cli{border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:10px}
+.boss-cli-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.boss-cli h2{font-size:1rem;font-weight:800;margin:0}
+.boss-cli small{color:var(--sub);font-size:.78rem;display:block;margin-top:2px;overflow-wrap:anywhere}
+.boss-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.boss-nums div{font-size:.78rem;color:var(--sub);font-weight:600}
+.boss-nums b{display:block;color:var(--ink);font-size:.95rem;font-variant-numeric:tabular-nums}
+.boss-nums .neg{color:var(--bad)} .boss-nums .pos{color:var(--ok)}
+.boss-open{cursor:pointer;font-family:inherit}
+.boss-bar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:8px 16px;background:var(--warnbg);color:var(--ink);font:600 .84rem var(--f-ui);border-bottom:1px solid var(--line)}
+.boss-bar button{background:none;border:0;color:var(--accent);font:800 .84rem var(--f-ui);cursor:pointer;padding:4px}

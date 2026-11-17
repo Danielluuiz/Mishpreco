@@ -92,3 +92,45 @@ revoke all on function public.exige_codigo_de_acesso() from public, anon, authen
 --        s.data->'company'->>'name' as empresa
 -- from auth.users u left join public.app_state s on s.user_id = u.id
 -- order by u.created_at;
+
+-- 4) Visão Boss: um gestor vê (só leitura) as planilhas dos clientes de uma carteira.
+--    A carteira de um cliente é a observação (obs) do código de acesso que ele usou.
+--    Ex.: gerar_codigos(1, 'ADM BOSS') ou gerar_codigos(1, 'ADM BOSS - Espaço GP') entram na carteira 'ADM BOSS'.
+create table if not exists public.boss (
+  email    text primary key,      -- e-mail da conta do gestor (em minúsculas)
+  carteira text not null          -- igual ao obs dos códigos dos clientes dele
+);
+alter table public.boss enable row level security;   -- ninguém lê pelo site; só pelas funções abaixo
+
+insert into public.boss(email, carteira) values ('amaury.adm@mish.com', 'ADM BOSS')
+  on conflict (email) do update set carteira = excluded.carteira;
+
+-- Carteira de quem está logado (null se não for Boss).
+create or replace function public.boss_carteira()
+returns text language sql stable security definer set search_path = public as $$
+  select b.carteira from public.boss b
+    join auth.users u on lower(u.email) = lower(b.email)
+   where u.id = auth.uid() and u.email_confirmed_at is not null
+   limit 1
+$$;
+
+-- Clientes da carteira de quem está logado, com a planilha de cada um. Vazio para quem não é Boss.
+create or replace function public.boss_clientes()
+returns table(user_id uuid, email text, codigo text, criado_em timestamptz, atualizado_em timestamptz, data jsonb)
+language sql stable security definer set search_path = public as $$
+  select u.id, u.email::text, c.codigo, u.created_at, s.updated_at, s.data
+    from public.codigos_acesso c
+    join auth.users u on u.id = c.usado_por
+    left join public.app_state s on s.user_id = u.id
+   where c.obs = public.boss_carteira() or c.obs like public.boss_carteira() || ' - %'
+   order by coalesce(s.updated_at, u.created_at) desc
+$$;
+revoke all on function public.boss_carteira() from public, anon;
+revoke all on function public.boss_clientes() from public, anon;
+grant execute on function public.boss_carteira() to authenticated;
+grant execute on function public.boss_clientes() to authenticated;
+
+-- COMO USAR:
+--   Novo gestor:            insert into boss values ('email@dominio.com', 'NOME DA CARTEIRA');
+--   Códigos para a carteira: select * from gerar_codigos(2, 'ADM BOSS');
+--   Código para o gestor criar a conta dele (fora da carteira): select * from gerar_codigos(1, 'BOSS');

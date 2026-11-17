@@ -161,10 +161,69 @@ async function renovar(){
 }
 const sessaoVencida=e=>/JWT expired|invalid JWT|jwt/i.test((e&&(e.message||e.code))||'')||(e&&(e.code==='PGRST301'||e.code==='PGRST303'));
 
+/* ---------------- visão Boss ---------------- */
+const brl=v=>(v<0?'-':'')+'R$ '+Math.abs(Number(v)||0).toLocaleString('pt-BR',{maximumFractionDigits:0});
+const pctf=v=>isFinite(v)?(v*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—';
+const somaV=a=>(a||[]).reduce((s,x)=>s+(Number(x.val)||0),0);
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const dataBR=d=>d?new Date(d).toLocaleDateString('pt-BR'):'—';
+/* mesmo cálculo do app (calcMonth) para o mês mais recente com faturamento */
+function resumo(d){
+  if(!d||!d.months)return null;
+  const ks=Object.keys(d.months).sort(), k=ks.filter(x=>Number(d.months[x].fat)>0).pop()||ks.pop(), m=d.months[k]||{};
+  const F=Number(m.fat)||0, CF=somaV(m.fixed), CV=somaV(m.variable), R=F-CV-CF, moP=F?(F-CV)/F:NaN;
+  const [y,mm]=(k||'').split('-');
+  return {mes:k?MES[+mm-1]+'/'+y:'—',F,CF,CV,R,rP:F?R/F:NaN,PE:moP>0?CF/moP:null,svc:(d.services||[]).length,prod:(d.products||[]).length};
+}
+async function painelBoss(session,carteira){
+  telaCarregando('Carregando sua carteira...');
+  let {data:lista,error}=await sb.rpc('boss_clientes');
+  if(error&&sessaoVencida(error)&&await renovar()) ({data:lista,error}=await sb.rpc('boss_clientes'));
+  if(error){ card('<div class="auth-msg">Não conseguimos carregar a carteira ('+esc(traduz(error))+').</div><button class="btn pri auth-full" onclick="location.reload()">Tentar de novo</button>'); return; }
+  lista=lista||[];
+  const rs=lista.map(c=>resumo(c.data)), ok=rs.filter(r=>r&&r.F>0);
+  const tF=ok.reduce((s,r)=>s+r.F,0), tR=ok.reduce((s,r)=>s+r.R,0);
+  const kpi=(l,v)=>'<div class="boss-kpi"><span>'+l+'</span><b>'+v+'</b></div>';
+  const cli=(c,i)=>{const r=rs[i], nome=(c.data&&c.data.company&&c.data.company.name)||'(sem nome da empresa)';
+    const nums=r?'<div class="boss-nums">'+
+      '<div>Mês<b>'+esc(r.mes)+'</b></div><div>Faturamento<b>'+brl(r.F)+'</b></div>'+
+      '<div>Custos fixos<b>'+brl(r.CF)+'</b></div><div>Custos variáveis<b>'+brl(r.CV)+'</b></div>'+
+      '<div>Resultado<b class="'+(r.R<0?'neg':'pos')+'">'+brl(r.R)+' ('+pctf(r.rP)+')</b></div>'+
+      '<div>Ponto de equilíbrio<b>'+(r.PE==null?'—':brl(r.PE))+'</b></div>'+
+      '<div>Serviços / produtos<b>'+r.svc+' / '+r.prod+'</b></div></div>'
+      :'<small>Ainda não preencheu a planilha.</small>';
+    return '<div class="boss-cli"><div class="boss-cli-top"><div><h2>'+esc(nome)+'</h2><small>'+esc(c.email)+' · atualizado em '+dataBR(c.atualizado_em)+'</small></div>'+
+      (c.data?'<button class="btn pri sm boss-open" data-i="'+i+'">Abrir planilha</button>':'')+'</div>'+nums+'</div>';};
+  body.classList.add('authing'); box.hidden=false;
+  box.innerHTML='<div class="auth-card boss"><div class="auth-logo">'+LOGO+'</div><p class="auth-tag">Visão Boss · '+esc(carteira)+'</p>'+
+    '<div class="boss-head"><h1>Clientes</h1><button class="auth-link" data-boss="sair">Sair ('+esc(session.user.email)+')</button></div>'+
+    '<div class="boss-tot">'+kpi('Clientes',lista.length)+kpi('Com planilha preenchida',ok.length)+kpi('Faturamento somado',brl(tF))+kpi('Resultado somado',brl(tR))+'</div>'+
+    '<div class="boss-list">'+(lista.length?lista.map(cli).join(''):'<p class="auth-sub">Nenhum cliente criou conta com código desta carteira ainda.</p>')+'</div></div>';
+  box.onclick=async e=>{
+    if(e.target.closest('[data-boss=sair]')){ await sb.auth.signOut(); location.replace(redirect()); return; }
+    const b=e.target.closest('.boss-open'); if(!b)return;
+    const c=lista[+b.dataset.i]; abrirCliente(session,c);
+  };
+}
+function abrirCliente(session,c){
+  const nome=(c.data.company&&c.data.company.name)||c.email;
+  window.MISH_READONLY=true;
+  window.MISH_KEY='mish-boss-consulta';
+  window.MISH_INITIAL=JSON.parse(JSON.stringify(c.data));
+  window.MISH_CLOUD={push(){},flush(){return Promise.resolve()}};
+  window.MISH_ACCOUNT={email:session.user.email,sair:async()=>{await sb.auth.signOut(); location.replace(redirect());}};
+  document.body.insertAdjacentHTML('afterbegin','<div class="boss-bar"><span>Consultando <b>'+esc(nome)+'</b> · somente leitura</span><button type="button" onclick="location.reload()">← Voltar aos clientes</button></div>');
+  const s=document.createElement('script'); s.src='js/app.js';
+  s.onload=()=>{ box.hidden=true; box.innerHTML=''; box.onclick=null; body.classList.remove('authing'); };
+  document.body.appendChild(s);
+}
+
 async function iniciar(session){
   if(iniciado||!session)return;
   const uid=session.user.id, KEY='mish-precifica-v1:'+uid, PEND='mish-precifica-pendente:'+uid;
   telaCarregando();
+  /* gestor (visão Boss)? mostra a carteira de clientes em vez da planilha própria */
+  try{ const {data:cart,error:eb}=await sb.rpc('boss_carteira'); if(!eb&&cart){ iniciado=true; return painelBoss(session,cart); } }catch(_){}
   const buscar=()=>sb.from('app_state').select('data,updated_at').eq('user_id',uid).maybeSingle();
   let {data:row,error}=await buscar();
   if(error&&sessaoVencida(error)){
