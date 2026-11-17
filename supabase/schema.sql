@@ -51,11 +51,13 @@ begin
   if not found then
     raise exception 'MISH_CODIGO: codigo de acesso invalido ou ja usado';
   end if;
-  return new;
+  return null;
 end $$;
 
 drop trigger if exists exige_codigo_de_acesso on auth.users;
-create trigger exige_codigo_de_acesso before insert on auth.users
+-- AFTER: a conta já existe quando o código é marcado como usado (antes dava erro de chave estrangeira).
+-- Se o código for inválido, o erro desfaz a criação da conta do mesmo jeito.
+create trigger exige_codigo_de_acesso after insert on auth.users
   for each row execute function public.exige_codigo_de_acesso();
 
 -- Gera códigos novos no formato MISH-XXXX-XXXX (sem letras confusas como O/0, I/1).
