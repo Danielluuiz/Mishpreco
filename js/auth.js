@@ -193,7 +193,7 @@ async function painelBoss(session,carteira){
       '<div>Serviços / produtos<b>'+r.svc+' / '+r.prod+'</b></div></div>'
       :'<small>Ainda não preencheu a planilha.</small>';
     return '<div class="boss-cli"><div class="boss-cli-top"><div><h2>'+esc(nome)+'</h2><small>'+esc(c.email)+' · atualizado em '+dataBR(c.atualizado_em)+'</small></div>'+
-      (c.data?'<button class="btn pri sm boss-open" data-i="'+i+'">Abrir planilha</button>':'')+'</div>'+nums+'</div>';};
+      (c.data?'<div class="boss-acts"><button class="btn sec sm boss-open boss-apres" data-i="'+i+'">Apresentação</button><button class="btn pri sm boss-open" data-i="'+i+'">Abrir planilha</button></div>':'')+'</div>'+nums+'</div>';};
   body.classList.add('authing'); box.hidden=false;
   box.innerHTML='<div class="auth-card boss"><div class="auth-logo">'+LOGO+'</div><p class="auth-tag">Visão Boss · '+esc(carteira)+'</p>'+
     '<div class="boss-head"><h1>Clientes</h1><button class="auth-link" data-boss="sair">Sair ('+esc(session.user.email)+')</button></div>'+
@@ -202,7 +202,13 @@ async function painelBoss(session,carteira){
   box.onclick=async e=>{
     if(e.target.closest('[data-boss=sair]')){ await sb.auth.signOut(); location.replace(redirect()); return; }
     const b=e.target.closest('.boss-open'); if(!b)return;
-    const c=lista[+b.dataset.i]; abrirCliente(session,c);
+    const c=lista[+b.dataset.i];
+    if(b.classList.contains('boss-apres')){
+      if(window.MISH_APRESENTACAO) window.MISH_APRESENTACAO(c.data,c.email);
+      else alert('Não foi possível carregar a apresentação. Recarregue a página e tente de novo.');
+      return;
+    }
+    abrirCliente(session,c);
   };
 }
 function abrirCliente(session,c){
