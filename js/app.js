@@ -235,7 +235,7 @@ function vHome(){
     '<button class="kpi clk" data-go="servicos" data-f="bad"><span class="label">Serviços no vermelho</span><span class="v">'+red+' <span class="muted" style="font-size:1rem">de '+S.services.length+'</span></span><span class="d">'+(red?'<span class="pill s-bad"><i></i>Rever preço</span>':'<span class="pill s-ok"><i></i>Tudo certo</span>')+'</span></button>'+
   '</div>';
   const st=[
-    ['import','Importar do Trinks ou Avec','Faturamento, despesas e lista de serviços','upload','#0EA5E9'],
+    ['import','Importar do Trinks ou Avec','Faturamento, despesas, serviços e produtos','upload','#0EA5E9'],
     ['mes','Conferir o mês','Faturamento, custos fixos e variáveis','wallet','#16A34A'],
     ['resultado','Ver o resultado','Lucro, ponto de equilíbrio e objetivo','chart','#8B5CF6'],
     ['servicos','Precificar serviços','Quanto sobra de cada serviço e preço sugerido','scissors','#FF3D6E'],
@@ -504,14 +504,14 @@ const SRC_TIPS={
 };
 function vImport(){
   const src=vstate.src||'trinks';
-  let h=head('upload','Importar do Trinks ou Avec','Traga o faturamento, as despesas e a lista de serviços sem digitar.');
+  let h=head('upload','Importar do Trinks ou Avec','Traga o faturamento, as despesas e as listas de serviços e produtos sem digitar.');
   h+=guide('<b>Passo a passo:</b> 1) exporte o relatório do sistema em Excel ou CSV · 2) envie o arquivo aqui · 3) confira o que vai entrar e toque em <b>Aplicar</b>. Você pode importar um arquivo de faturamento e outro de despesas, um de cada vez.');
   h+='<div class="stack"><div class="srcs" role="group" aria-label="De qual sistema vem o arquivo">'+
      [['trinks','Trinks','Excel'],['avec','Avec','Excel ou CSV'],['outro','Outro','Qualquer planilha']].map(s=>'<button class="src'+(src===s[0]?' on':'')+'" data-src="'+s[0]+'">'+s[1]+'<small>'+s[2]+'</small></button>').join('')+'</div>';
   h+='<p class="small muted" style="margin:0">'+SRC_TIPS[src]+'</p>';
   if(!IMP){
     h+='<div class="drop" id="drop"><span class="bub">'+I('file')+'</span><b>Arraste o arquivo aqui</b><span class="small muted">.xlsx, .xls ou .csv</span><button class="btn pri" data-act="pick-import">'+I('upload')+'Escolher arquivo</button></div>';
-    if(vstate.done) h+='<div class="card row" style="border-color:var(--okdot)"><span class="pill s-ok"><i></i>Importado</span><span>'+esc(vstate.done)+'</span><span class="grow" style="flex:1"></span><button class="btn sm sec" data-go="mes">Ver o mês</button><button class="btn sm sec" data-go="servicos">Ver serviços</button></div>';
+    if(vstate.done) h+='<div class="card row" style="border-color:var(--okdot)"><span class="pill s-ok"><i></i>Importado</span><span>'+esc(vstate.done)+'</span><span class="grow" style="flex:1"></span><button class="btn sm sec" data-go="mes">Ver o mês</button><button class="btn sm sec" data-go="servicos">Ver serviços</button><button class="btn sm sec" data-go="produtos">Ver produtos</button></div>';
     return h+'</div>';
   }
   h+=importPanel();
@@ -520,7 +520,8 @@ function vImport(){
 function colOpts(sel,allowNone){
   return (allowNone?'<option value="-1">— não usar —</option>':'')+IMP.headers.map((x,i)=>'<option value="'+i+'"'+(+sel===i?' selected':'')+'>'+esc(x)+'</option>').join('');
 }
-const TYPES=[['faturamento','Faturamento'],['despesas','Despesas'],['servicos','Serviços e preços'],['mish','Planilha modelo MISH']];
+const TYPES=[['faturamento','Faturamento'],['despesas','Despesas'],['servicos','Serviços e preços'],['produtos','Produtos e preços'],['mish','Planilha modelo MISH']];
+const LISTA=t=>t==='servicos'||t==='produtos'; /* listas de preço: não dependem de mês */
 function importPanel(){
   const t=IMP.type, mp=IMP.map;
   let h='<div class="card stack"><div class="row" style="justify-content:space-between"><div><span class="label">Arquivo</span><div style="font-weight:800;word-break:break-all">'+esc(IMP.fileName)+'</div></div><button class="btn sm ghost" data-act="imp-cancel">'+I('x')+'Trocar arquivo</button></div>';
@@ -534,6 +535,11 @@ function importPanel(){
       h+='<label class="field"><span>Coluna do preço</span><select class="inp" data-map="val">'+colOpts(mp.val)+'</select></label>';
       h+='<label class="field"><span>Coluna da categoria</span><select class="inp" data-map="cat">'+colOpts(mp.cat,true)+'</select></label>';
       h+='<label class="field"><span>Coluna da comissão %</span><select class="inp" data-map="comm">'+colOpts(mp.comm,true)+'</select></label>';
+    } else if(t==='produtos'){
+      h+='<label class="field"><span>Coluna do nome do produto</span><select class="inp" data-map="name">'+colOpts(mp.name)+'</select></label>';
+      h+='<label class="field"><span>Coluna do preço de venda</span><select class="inp" data-map="val">'+colOpts(mp.val)+'</select></label>';
+      h+='<label class="field"><span>Coluna do custo (quanto você paga)</span><select class="inp" data-map="cost">'+colOpts(mp.cost,true)+'</select></label>';
+      h+='<label class="field"><span>Coluna da comissão %</span><select class="inp" data-map="comm">'+colOpts(mp.comm,true)+'</select></label>';
     } else {
       h+='<label class="field"><span>Coluna do valor</span><select class="inp" data-map="val">'+colOpts(mp.val)+'</select></label>';
       h+='<label class="field"><span>'+(t==='despesas'?'Coluna da categoria ou descrição':'Coluna do tipo (serviço, produto…)')+'</span><select class="inp" data-map="desc">'+colOpts(mp.desc,true)+'</select></label>';
@@ -543,7 +549,7 @@ function importPanel(){
   }
   const pv=buildImport();
   IMP.pv=pv;
-  if(t!=='servicos'){
+  if(!LISTA(t)){
     const months=pv.months||[];
     h+='<div class="row"><label class="field" style="min-width:220px"><span>'+(months.length?'Mês do arquivo':'Lançar no mês')+'</span><select class="inp" id="imp-month">'+
       (months.length?months.map(k=>'<option value="'+k+'"'+(k===IMP.month?' selected':'')+'>'+mLabel(k)+' ('+pv.monthCount[k]+' linhas)</option>').join(''):Object.keys(S.months).sort().map(k=>'<option value="'+k+'"'+(k===IMP.month?' selected':'')+'>'+mLabel(k)+'</option>').join(''))+
@@ -564,6 +570,12 @@ function importPanel(){
     const nw=pv.items.filter(x=>!x.exists).length;
     h+='<div class="card stack"><div class="row" style="justify-content:space-between"><span class="label">Prévia · '+pv.items.length+' serviços</span><span class="small muted">'+nw+' novos · '+(pv.items.length-nw)+' com preço atualizado'+(pv.skipped?' · '+pv.skipped+' sem preço ignorados':'')+'</span></div>';
     h+='<div class="tw"><table><thead><tr><th>Serviço</th><th>Categoria</th><th style="text-align:right">Preço</th><th></th></tr></thead><tbody>'+pv.items.slice(0,80).map(x=>'<tr><td style="white-space:normal">'+esc(x.name)+'</td><td>'+esc(x.cat)+'</td><td class="num">'+brl(x.price,2)+'</td><td>'+(x.exists?'<span class="pill s-none">Atualiza</span>':'<span class="pill s-ok"><i></i>Novo</span>')+'</td></tr>').join('')+'</tbody></table></div>'+(pv.items.length>80?'<div class="small muted">Mostrando 80 de '+pv.items.length+'.</div>':'')+'</div>';
+  } else if(t==='produtos'){
+    const nw=pv.items.filter(x=>!x.exists).length;
+    h+='<div class="card stack"><div class="row" style="justify-content:space-between"><span class="label">Prévia · '+pv.items.length+' produtos</span><span class="small muted">'+nw+' novos · '+(pv.items.length-nw)+' atualizados'+(pv.skipped?' · '+pv.skipped+' sem preço ignorados':'')+'</span></div>';
+    h+='<div class="tw"><table><thead><tr><th>Produto</th><th style="text-align:right">Custo</th><th style="text-align:right">Preço</th><th style="text-align:right">Comissão</th><th></th></tr></thead><tbody>'+pv.items.slice(0,80).map(x=>'<tr><td style="white-space:normal">'+esc(x.name)+'</td><td class="num">'+(x.cost!=null?brl(x.cost,2):'<span class="muted">—</span>')+'</td><td class="num">'+brl(x.price,2)+'</td><td class="num">'+(x.comm!=null?pct(x.comm/100):'<span class="muted">—</span>')+'</td><td>'+(x.exists?'<span class="pill s-none">Atualiza</span>':'<span class="pill s-ok"><i></i>Novo</span>')+'</td></tr>').join('')+'</tbody></table></div>'+(pv.items.length>80?'<div class="small muted">Mostrando 80 de '+pv.items.length+'. Todos entram ao aplicar.</div>':'');
+    if(pv.items.some(x=>x.cost==null)) h+='<div class="small muted">Produtos sem custo no arquivo entram com custo R$ 0 (novos) ou mantêm o custo atual (existentes). Ajuste depois na tela Produtos.</div>';
+    h+='</div>';
   } else if(t==='mish'){
     h+='<div class="card stack"><span class="label">Prévia · planilha modelo MISH</span>'+
        '<div class="grid3"><div><span class="small muted">Faturamento</span><div class="bigline">'+brl(pv.fat,0)+'</div></div><div><span class="small muted">Custos fixos ('+pv.fixed.length+')</span><div class="bigline">'+brl(sum(pv.fixed),0)+'</div></div><div><span class="small muted">Custos variáveis ('+pv.variable.length+')</span><div class="bigline">'+brl(sum(pv.variable),0)+'</div></div></div>'+
@@ -615,11 +627,18 @@ function guessMap(type){
   const H=IMP.headers.map(norm), rows=IMP.body;
   const find=(...res)=>{for(const re of res){const i=H.findIndex(h=>re.test(h));if(i>-1)return i}return -1};
   const numericCol=()=>{let best=-1,bc=0;IMP.headers.forEach((_,i)=>{let c=0;rows.slice(0,60).forEach(r=>{const v=r[i];if(typeof v==='number'||(typeof v==='string'&&/^\s*-?\(?\s*(R\$)?\s*-?[\d.]+(,\d{1,2})?\)?\s*$/.test(v)&&/\d/.test(v)))c++});if(c>bc){bc=c;best=i}});return best};
+  /* comissão: só a coluna em %, nunca a de valor em R$ */
+  const commCol=()=>{ let i=H.findIndex(h=>/comiss/.test(h)&&/%/.test(h)); if(i<0)i=H.findIndex(h=>/comiss/.test(h)&&!/r\$|valor/.test(h)); return i; };
   const mp={};
   if(type==='servicos'){
     mp.name=find(/servi[cç]o|procedimento|^nome|descri/); if(mp.name<0)mp.name=0;
     mp.val=find(/pre[cç]o|valor/); if(mp.val<0)mp.val=numericCol();
-    mp.cat=find(/categoria|grupo|area|setor|^time/); mp.comm=find(/comiss/);
+    mp.cat=find(/categoria|grupo|area|setor|^time/); mp.comm=commCol();
+  } else if(type==='produtos'){
+    mp.name=find(/produto|^nome|^item|descri/); if(mp.name<0)mp.name=0;
+    mp.cost=find(/^custo|custo unit|pre[cç]o de (compra|custo)|valor de (compra|custo)|^compra/,/custo/);
+    const venda=find(/pre[cç]o de venda|valor de venda|^venda/), outro=H.findIndex((h,i)=>/pre[cç]o|valor/.test(h)&&!/custo|compra|comiss|r\$ ?$/.test(h)&&i!==mp.cost);
+    mp.val=venda>-1?venda:outro>-1?outro:numericCol(); mp.comm=commCol();
   } else {
     mp.val=find(/valor bruto|^total$|total bruto|faturamento|valor total|^valor$|valor pago|valor \(r\$\)/,/valor|total|pre[cç]o|montante|pago/); if(mp.val<0)mp.val=numericCol();
     mp.desc=type==='despesas'?find(/categoria|plano de contas|tipo de despesa|centro de custo/,/descri|hist[oó]rico|fornecedor|favorecido|^nome/):find(/^tipo|categoria|item|grupo/);
@@ -632,10 +651,14 @@ function guessType(){
   const colA=IMP.rows.map(r=>norm(r&&r[0])).join('|');
   if(/custo fixo/.test(colA)&&/faturamento/.test(colA))return 'mish';
   const t=norm(IMP.headers.join(' ')+' '+IMP.sheet+' '+IMP.fileName);
+  const H=norm(IMP.headers.join(' ')), temData=/\bdata\b|\bdt\b|vencimento|competencia/.test(H);
+  const temSvc=/servico|procedimento/.test(H), temPrd=/produto/.test(H), nomeArq=norm(IMP.sheet+' '+IMP.fileName);
+  /* produtos: coluna "Produto" sem coluna de serviço (a "Ficha técnica" tem as duas e não é lista de produtos) */
+  if(!temData&&temPrd&&!temSvc&&/preco|valor|custo/.test(H))return 'produtos';
+  if(!temData&&!temSvc&&/produto/.test(nomeArq)&&!/servico/.test(nomeArq))return 'produtos';
   if(/despesa|a pagar|contas a pagar|fornecedor|plano de contas|centro de custo/.test(t))return 'despesas';
   /* lista de serviços: tem coluna de serviço/preço e nenhuma coluna de data (Avec exporta "Serviço | Descrição | Categoria | Valor") */
-  const H=norm(IMP.headers.join(' ')), temData=/\bdata\b|\bdt\b|vencimento|competencia/.test(H);
-  if(!temData&&(/servico|procedimento/.test(H)||/preco/.test(H)))return 'servicos';
+  if(!temData&&(temSvc||/preco/.test(H)))return 'servicos';
   if(!temData&&/servicos/.test(t))return 'servicos';
   return 'faturamento';
 }
@@ -675,6 +698,18 @@ function buildImport(){
     if(!items.length) return {error:'Não achei serviços com preço. Confira se a coluna do nome e a do preço estão certas.'};
     return {items,skipped};
   }
+  if(t==='produtos'){
+    const items=[]; let skipped=0; const seen={};
+    rows.forEach(r=>{ const name=String(r[mp.name]==null?'':r[mp.name]).replace(/\s+/g,' ').trim(); const price=parseNum(r[mp.val]);
+      if(!name||/^total/i.test(name)||!isFinite(price)||price<=0){ if(name)skipped++; return; }
+      const k=norm(name); if(seen[k])return; seen[k]=1;
+      const cost=mp.cost>-1?parseNum(r[mp.cost]):NaN;
+      let comm=mp.comm>-1?parseNum(r[mp.comm]):NaN; if(isFinite(comm)&&comm<=1)comm*=100;
+      items.push({name,price,cost:isFinite(cost)&&cost>=0?Math.abs(cost):null,comm:isFinite(comm)&&comm>=0&&comm<=100?comm:null,exists:S.products.some(p=>norm(p.name)===k)});
+    });
+    if(!items.length) return {error:'Não achei produtos com preço. Confira se a coluna do nome e a do preço de venda estão certas.'};
+    return {items,skipped};
+  }
   // faturamento / despesas
   const monthCount={}; const recs=[]; let skipped=0;
   rows.forEach(r=>{
@@ -707,6 +742,12 @@ function applyImport(){
       if(ex){ex.price=x.price; if(x.comm!=null)ex.comm=x.comm; u++}
       else { if(x.cat&&!S.cats.includes(x.cat))S.cats.push(x.cat); S.services.push({id:uid(),name:x.name,cat:x.cat,price:x.price,comm:x.comm!=null?x.comm:Number(S.params.commDef)||40,mode:'manual',prodCost:0,ficha:[]}); n++ } });
     msg=n+' serviços novos e '+u+' preços atualizados.';
+  } else if(t==='produtos'){
+    let n=0,u=0;
+    pv.items.forEach(x=>{ const ex=S.products.find(p=>norm(p.name)===norm(x.name));
+      if(ex){ ex.price=x.price; if(x.cost!=null)ex.cost=x.cost; if(x.comm!=null)ex.comm=x.comm; u++; }
+      else { S.products.push({id:uid(),name:x.name,price:x.price,cost:x.cost!=null?x.cost:0,comm:x.comm!=null?x.comm:10}); n++; } });
+    msg=n+' produtos novos e '+u+' atualizados.';
   } else {
     const m=ensureMonth(IMP.month); S.cur=IMP.month;
     if(t==='faturamento'){ m.fat=Math.round(pv.total*100)/100; msg='Faturamento de '+mLabel(IMP.month)+': '+brl(m.fat,2)+'.'; }
