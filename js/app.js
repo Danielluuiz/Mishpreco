@@ -633,8 +633,10 @@ function guessType(){
   if(/custo fixo/.test(colA)&&/faturamento/.test(colA))return 'mish';
   const t=norm(IMP.headers.join(' ')+' '+IMP.sheet+' '+IMP.fileName);
   if(/despesa|a pagar|contas a pagar|fornecedor|plano de contas|centro de custo/.test(t))return 'despesas';
-  if(/(servi[cç]o|procedimento)/.test(t)&&/pre[cç]o/.test(t)&&!/data/.test(t))return 'servicos';
-  if(/preco/.test(t)&&!/data/.test(t))return 'servicos';
+  /* lista de serviços: tem coluna de serviço/preço e nenhuma coluna de data (Avec exporta "Serviço | Descrição | Categoria | Valor") */
+  const H=norm(IMP.headers.join(' ')), temData=/\bdata\b|\bdt\b|vencimento|competencia/.test(H);
+  if(!temData&&(/servico|procedimento/.test(H)||/preco/.test(H)))return 'servicos';
+  if(!temData&&/servicos/.test(t))return 'servicos';
   return 'faturamento';
 }
 function setSheet(name){
